@@ -149,3 +149,5 @@ class Selenium_Spider(scrapy.Spider):
         if self.conn_2:
             self.conn_2.close()
 
+
+
