@@ -1,0 +1,9 @@
+mysql-connector-python
+scrapy
+dateparser
+python-dotenv
+beautifulsoup4
+lxml
+emoji
+selenium
+webdriver-manager

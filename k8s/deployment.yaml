@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scrapy-selenium
+  namespace: development
+spec:
+  selector:
+    matchLabels:
+      app: scrapy-selenium
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: scrapy-selenium
+    spec:
+      nodeSelector:
+        imasv2_access: "true"
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: scrapy-selenium
+          image: registry-gitlab.imas.kz/imas/scrapy_selenium:latest
+          imagePullPolicy: "Always"
+          envFrom:
+            - secretRef:
+                name: spider-secret
+          resources:
+            requests:
+              memory: "1.5Gi"
+              cpu: "0.9"
+            limits:
+              memory: "2Gi"
+              cpu: "1.0"
+
+      imagePullSecrets:
+        - name: regcred
+
+
+
