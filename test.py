@@ -9,6 +9,10 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import tldextract
 load_dotenv()
+from urllib.parse import urlparse
+
+
+
 # Подключение к БД
 conn_1 = mysql.connector.connect(
     host=os.getenv("DB_HOST_1"),
@@ -45,11 +49,16 @@ if conn_1.is_connected() and conn_2.is_connected():
         "SELECT RESOURCE_ID, RESOURCE_URL "
         "FROM resource "
         "WHERE status = %s",
-        ('r_bsoup_parser',)
+        ('spider_scrapy',)
     )
     resources = cursor_1.fetchall()
 else:
     print('ошибка')
+
+def remove_after_domain(url):
+    parsed_url = urlparse(url)
+    # Формируем URL без пути
+    return f"{parsed_url.scheme}://{parsed_url.hostname}"
 
 
 def extract_domain(url):
@@ -102,17 +111,15 @@ def check_url_via_selenium(url):
         try:
             driver.get(url)
             current_url = driver.current_url
-
             # Проверяем, если страница загрузилась (например, страница не пустая)
             if len(driver.page_source) > 0:
                 status = 200  # Страница успешно загрузилась
             else:
-                status = 405  # Если страница пустая, возвращаем 404
-
+                status = 404  # Если страница пустая, возвращаем 404
         except Exception as e:
             # Если возникла ошибка во время загрузки страницы
             # print(f"Timeout or error loading {url}: {e}")
-            status = 405
+            status = 404
             current_url = url
 
         driver.quit()  # Закрываем браузер
@@ -140,10 +147,11 @@ for resource_id, url in resources:
     if cursor_2.fetchone() is None:
 
         url = url.split(',')[0].strip()
+        url =  remove_after_domain(url)
         # Пробуем через requests
         status, redirect_url = check_url_via_requests(url)
         selenium_used = 'no'
-        if status == 200 or status == 404:
+        if status == 200 or status == 300 or status == 404:
             save_to_db(resource_id, url, status, redirect_url, selenium_used)
         else:
             # Если ошибка или редирект, пробуем через Selenium
