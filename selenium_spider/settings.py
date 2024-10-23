@@ -94,7 +94,8 @@ TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
 # DOWNLOAD_DELAY = 15
 DOWNLOADER_MIDDLEWARES = {
-    'selenium_spider.selenium.SeleniumMiddleware': 543,  # Укажите правильный путь к файлу
+    'selenium_spider.middlewares.SeleniumFallbackMiddleware': 543,
+    'selenium_spider.selenium.SeleniumMiddleware': 544  # Укажите правильный путь к файлу
 }
 LOG_LEVEL = 'INFO'
 

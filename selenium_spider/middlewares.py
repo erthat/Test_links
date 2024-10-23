@@ -101,3 +101,19 @@ class SeleniumSpiderDownloaderMiddleware:
 
     def spider_opened(self, spider):
         spider.logger.info("Spider opened: %s" % spider.name)
+
+
+class SeleniumFallbackMiddleware:
+    def process_response(self, request, response, spider):
+        if response.status != 200:
+            # Если статус не успешен, создать новый запрос через Selenium
+            spider.logger.info(f"Response not successful for {response.url}, switching to Selenium.")
+            selenium_request = request.replace(meta={'selenium': True}, dont_filter=True)
+            return selenium_request
+        return response
+
+    def process_exception(self, request, exception, spider):
+        # В случае исключения создаем запрос с использованием Selenium
+        spider.logger.info(f"Exception for {request.url}: {exception}, switching to Selenium.")
+        selenium_request = request.replace(meta={'selenium': True}, dont_filter=True)
+        return selenium_request

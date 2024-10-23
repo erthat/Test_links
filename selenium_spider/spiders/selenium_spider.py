@@ -70,9 +70,8 @@ class Selenium_Spider(scrapy.Spider):
                 self.cursor_1.execute(
                     "SELECT RESOURCE_ID, RESOURCE_NAME, RESOURCE_URL, top_tag, bottom_tag, title_cut, date_cut, convert_date, block_page, middle_tag "
                     "FROM resource "
-                    "WHERE status = %s "
-                    "AND RESOURCE_STATUS = %s",
-                    ('bsoup_parser_1', 'WORK')
+                    "WHERE status = %s ",
+                    ('SP',)
                 )
 
                 self.resources = self.cursor_1.fetchall()
@@ -95,7 +94,6 @@ class Selenium_Spider(scrapy.Spider):
     def start_requests(self):
         # Здесь вы можете получить ссылки из вашей базы данных
         links = self.start_urls
-        print(links)# Псевдокод для получения ссылок
 
         for link in links:
             yield Request(link, self.parse_start_url)
@@ -111,7 +109,6 @@ class Selenium_Spider(scrapy.Spider):
         )
         resource_id = resource_info[0]
         status = response.status
-        print(status)
         current_url = response.request.url
         redirect_url = response.request.url if response.url != response.request.url else None
 
@@ -135,7 +132,7 @@ class Selenium_Spider(scrapy.Spider):
 
         if count == 0:
             self.cursor_2.execute(
-                "INSERT INTO test_link (resource_id, current_url, status, redirect_url) VALUES (%s, %s, %s, %s)",
+                "INSERT INTO test_link (resource_id, current_url, status, redirect_url, Selenium) VALUES (%s, %s, %s, %s)",
                 (resource_id, current_url, status, redirect_url)
             )
             self.conn_2.commit()

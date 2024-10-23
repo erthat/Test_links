@@ -18,7 +18,7 @@ handler = RotatingFileHandler(
     backupCount=1       # Количество резервных копий логов (если установить 0, то старый файл будет перезаписываться)
 )
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s %(levelname)s: %(message)s',
     handlers=[
         handler,
