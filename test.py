@@ -10,6 +10,9 @@ from selenium.webdriver.chrome.options import Options
 import tldextract
 load_dotenv()
 from urllib.parse import urlparse
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 
 
@@ -70,12 +73,27 @@ def extract_domain(url):
         return None
 
 # Функция для запроса через requests
-def check_url_via_requests(url):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.6613.137 Safari/537.36"
-    }
+def check_url_via_requests(url, retries=3, backoff_factor=0.3, status_forcelist=(500, 502, 504)):
+    # Создаем сессию для использования повторных попыток
+    session = requests.Session()
+
+    # Настраиваем повторные попытки
+    retry = Retry(
+        total=retries,  # Количество попыток
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,  # Время ожидания между попытками (увеличивается с каждым повтором)
+        status_forcelist=status_forcelist,  # Коды, для которых стоит повторить запрос
+    )
+
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+
     try:
-        response = requests.get(url, headers=headers, timeout=10)
+        # Настройка таймаута (например, 5 секунд для соединения и 10 для ожидания ответа)
+        response = session.get(url, timeout=(2, 5))
+        response.raise_for_status()
         if response.history:
             original_domain = extract_domain(url)
             final_domain = extract_domain(response.url)
@@ -85,10 +103,17 @@ def check_url_via_requests(url):
                 return response.status_code, response.url
         else:
             return response.status_code, None
+    except requests.exceptions.HTTPError as e:
+        return 401, None
 
-    except requests.RequestException as e:
-        print(f"Error fetching {url}: {e}")
-        return 999, url
+    except requests.exceptions.ConnectionError:
+        return 404, None
+
+    except requests.exceptions.Timeout:
+        return 500, None
+
+    except requests.exceptions.RequestException as e:
+        return 600, None
 
 # Функция для запроса через Selenium
 def check_url_via_selenium(url):
