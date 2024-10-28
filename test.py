@@ -13,8 +13,8 @@ from urllib.parse import urlparse
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-
-
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
 
 # Подключение к БД
 conn_1 = mysql.connector.connect(
@@ -52,7 +52,7 @@ if conn_1.is_connected() and conn_2.is_connected():
         "SELECT RESOURCE_ID, RESOURCE_URL "
         "FROM resource "
         "WHERE status = %s",
-        ('spider_scrapy',)
+        ('test',)
     )
     resources = cursor_1.fetchall()
 else:
@@ -92,7 +92,7 @@ def check_url_via_requests(url, retries=3, backoff_factor=0.3, status_forcelist=
 
     try:
         # Настройка таймаута (например, 5 секунд для соединения и 10 для ожидания ответа)
-        response = session.get(url, timeout=(2, 5))
+        response = session.get(url, timeout=(2, 5), verify=False)
         response.raise_for_status()
         if response.history:
             original_domain = extract_domain(url)
@@ -136,6 +136,9 @@ def check_url_via_selenium(url):
         try:
             driver.get(url)
             current_url = driver.current_url
+            WebDriverWait(driver, 10).until(
+                lambda d: d.find_element(By.TAG_NAME, "body").text.strip() != ""
+            )
             # Проверяем, если страница загрузилась (например, страница не пустая)
             if len(driver.page_source) > 0:
                 status = 200  # Страница успешно загрузилась
